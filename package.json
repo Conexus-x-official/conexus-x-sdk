@@ -1,0 +1,65 @@
+{
+    "name": "@conexus-x/sdk",
+    "version": "0.1.0",
+    "description": "Build custom views that run inside a Conexus X module board.",
+    "license": "UNLICENSED",
+    "type": "module",
+    "sideEffects": false,
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "default": "./dist/index.js"
+        },
+        "./react": {
+            "types": "./dist/react.d.ts",
+            "default": "./dist/react.js"
+        },
+        "./host": {
+            "types": "./dist/host.d.ts",
+            "default": "./dist/host.js"
+        },
+        "./react-host": {
+            "types": "./dist/react-host.d.ts",
+            "default": "./dist/react-host.js"
+        },
+        "./manifest": {
+            "types": "./dist/manifest.d.ts",
+            "default": "./dist/manifest.js"
+        }
+    },
+    "files": [
+        "dist",
+        "README.md"
+    ],
+    "scripts": {
+        "build": "tsc -p tsconfig.json",
+        "typecheck": "tsc -p tsconfig.json --noEmit",
+        "clean": "rimraf dist",
+        "test": "node --test test/bridge.test.mjs"
+    },
+    "keywords": [
+        "conexus-x",
+        "crm",
+        "sdk",
+        "custom-view",
+        "apps",
+        "react"
+    ],
+    "peerDependencies": {
+        "react": "^18.0.0 || ^19.0.0"
+    },
+    "peerDependenciesMeta": {
+        "react": {
+            "optional": true
+        }
+    },
+    "devDependencies": {
+        "@types/react": "^19.0.0",
+        "typescript": "^5.9.3"
+    },
+    "publishConfig": {
+        "access": "restricted"
+    }
+}
