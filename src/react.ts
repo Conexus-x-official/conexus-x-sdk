@@ -26,6 +26,7 @@ import type {
     Connection,
     CxCollection,
     CxColumn,
+    CxModule,
     CxRecord,
     EventMap,
     ViewContext
@@ -340,6 +341,27 @@ export const useRecords = (
         }
     );
 
+/**
+ * The boards in a workspace, kept live.
+ *
+ * The hook a WORKSPACE-LEVEL view needs: mounted above a board, `context` has a
+ * workspaceId and no collection, so there are no records to list yet — the
+ * boards are what there is to show.
+ */
+export const useModules = (
+    workspaceId: string | undefined,
+    client?: ConexusClient
+): QueryState<CxModule[]> =>
+    useConexusQuery<CxModule[]>(
+        (cx) => cx.api.modules.list(workspaceId as string),
+        {
+            deps: [workspaceId],
+            enabled: Boolean(workspaceId),
+            shouldRefetch: (event) => event.entity === "module",
+            ...(client ? { client } : {})
+        }
+    );
+
 /** The collections on the mounted board. */
 export const useCollections = (
     moduleId: string | undefined,
@@ -441,6 +463,7 @@ export type {
     CxCollection,
     CxColumn,
     CxMember,
+    CxModule,
     CxRecord,
     CxRecordValue,
     CxStatusOption,

@@ -49,6 +49,27 @@ export interface RouteRule {
  * sits above `/record-values/:recordId` for exactly that reason.
  */
 export const ROUTES: readonly RouteRule[] = [
+    /**
+     * Boards.
+     *
+     * A view mounted at WORKSPACE level has no board behind it — the host hands
+     * it a workspaceId and nothing else — so `modules:read` is what makes a
+     * workspace-level view useful at all: without it an app cannot show a
+     * person anything until they open a board themselves.
+     *
+     * `modules:write` covers create, rename/recolour and delete under one
+     * scope, the same convention as `collections:write` below — a board is a
+     * structural object, not a value, and the three operations are reviewed
+     * together or not at all. Held to a HIGHER bar than the resource scopes: a
+     * deleted board takes every collection, record and cell inside it with it,
+     * so an admin approving this is approving the app to remove a whole area of
+     * the workspace, not edit a value in one.
+     */
+    { method: "GET", pattern: "/modules/:workspaceId", scope: "modules:read", summary: "List the boards in a workspace" },
+    { method: "POST", pattern: "/modules/:workspaceId", scope: "modules:write", summary: "Create a board" },
+    { method: "PUT", pattern: "/modules/:moduleId", scope: "modules:write", summary: "Rename, recolour or change the visibility of a board" },
+    { method: "DELETE", pattern: "/modules/:moduleId", scope: "modules:write", summary: "Delete a board and everything inside it" },
+
     // Collections — the groups a board is split into.
     { method: "GET", pattern: "/collections/:moduleId", scope: "collections:read", summary: "List the collections on a board" },
     { method: "POST", pattern: "/collections/:moduleId", scope: "collections:write", summary: "Create a collection" },

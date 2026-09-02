@@ -56,6 +56,8 @@ export const DEFAULT_HANDSHAKE_TIMEOUT_MS = 10_000;
  * 403 from the server. Scopes narrow; they do not grant.
  */
 export const SCOPES = [
+    "modules:read",
+    "modules:write",
     "records:read",
     "records:write",
     "collections:read",

@@ -41,6 +41,7 @@ import type {
     CxCollection,
     CxColumn,
     CxMember,
+    CxModule,
     CxRecord,
     CxRecordValue,
     EventMap,
@@ -282,7 +283,21 @@ export class ConexusClient {
         topic: T,
         handler: (payload: EventMap[T]) => void
     ): () => void {
-        void this.connect();
+        /**
+         * Connect in the background, and SWALLOW the failure here.
+         *
+         * `void this.connect()` was wrong: `void` discards the promise without
+         * attaching a rejection handler, so a view opened outside the app —
+         * which the templates document as a normal thing to do — filled the
+         * developer's terminal with `unhandledRejection: This view is not
+         * embedded` once per subscribed topic, on every render pass.
+         *
+         * Swallowing it is correct rather than lazy: subscribing is not asking
+         * for a connection, and the failure is not lost — `connect()` still
+         * rejects for anyone who awaited it, which is how useConnection puts
+         * the reason on screen.
+         */
+        this.connect().catch(() => {});
 
         const handlers = this.listeners.get(topic) ?? new Set();
         handlers.add(handler as (payload: never) => void);
@@ -328,6 +343,18 @@ export class ConexusClient {
      * shapes are described and no cache to go stale.
      */
     readonly api = {
+        /** Boards in a workspace. Read-only — see routes.ts for why. */
+        modules: {
+            list: (workspaceId: string) =>
+                this.data<CxModule[]>({ method: "GET", path: `/modules/${workspaceId}` }),
+            create: (workspaceId: string, body: { name: string; description?: string; icon?: string; color?: string; visibility?: CxModule["visibility"] }) =>
+                this.data<CxModule>({ method: "POST", path: `/modules/${workspaceId}`, body }),
+            update: (moduleId: string, body: Partial<CxModule>) =>
+                this.data<CxModule>({ method: "PUT", path: `/modules/${moduleId}`, body }),
+            remove: (moduleId: string) =>
+                this.data<unknown>({ method: "DELETE", path: `/modules/${moduleId}` })
+        },
+
         collections: {
             list: (moduleId: string) =>
                 this.data<CxCollection[]>({ method: "GET", path: `/collections/${moduleId}` }),

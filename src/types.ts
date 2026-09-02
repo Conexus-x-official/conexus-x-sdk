@@ -28,6 +28,20 @@ export interface CxUser {
     avatar?: string;
 }
 
+/** A board. Called a module in the API and on the wire. */
+export interface CxModule {
+    _id: string;
+    name: string;
+    description?: string;
+    icon?: string;
+    color?: string;
+    visibility?: "private" | "workspace" | "public";
+    totalRecords?: number;
+    completedRecords?: number;
+    createdAt?: string;
+    updatedAt?: string;
+}
+
 export interface CxCollection {
     _id: string;
     name: string;

@@ -323,6 +323,39 @@ test("a missing host origin fails the connection rather than the render", async 
     globalThis.window = saved;
 });
 
+test("listening on a view that is not embedded does not throw an unhandled rejection", async () => {
+    // REGRESSION: listen() used to fire `void this.connect()`, which discards
+    // the promise WITHOUT a rejection handler. A view opened outside the app —
+    // which the templates document as a normal thing to do — then filled the
+    // developer's terminal with "unhandledRejection: This view is not embedded"
+    // once per subscribed topic, on every render pass. Seen in a real terminal,
+    // not in a test.
+    const saved = globalThis.window;
+    const rejections = [];
+    const onRejection = (error) => rejections.push(error);
+
+    process.on("unhandledRejection", onRejection);
+
+    // A browser, but the top window — exactly what opening the dev URL gives.
+    const top = new WindowShim(APP_ORIGIN, `?cxOrigin=${encodeURIComponent(HOST_ORIGIN)}`);
+    top.parent = top;
+    globalThis.window = top;
+
+    const cx = conexus();
+
+    assert.doesNotThrow(() => cx.listen("change", () => {}));
+    assert.doesNotThrow(() => cx.listen("context", () => {}));
+
+    // Unhandled rejections are reported on a later turn of the loop, so give
+    // the loop a few turns before deciding none arrived.
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    process.off("unhandledRejection", onRejection);
+    globalThis.window = saved;
+
+    assert.deepEqual(rejections, [], "subscribing must not produce an unhandled rejection");
+});
+
 test("the route table matches what it should and nothing else", () => {
     assert.equal(matchRoute("GET", "/records/abc123").rule.scope, "records:read");
     assert.equal(matchRoute("GET", "/records/abc123/sub-records").rule.scope, "records:read");
@@ -334,11 +367,66 @@ test("the route table matches what it should and nothing else", () => {
         "Read mirrored values across linked boards"
     );
 
+    // Boards: GET/POST share a pattern shape with PUT/DELETE (one param
+    // segment) but differ by method, so all four must resolve independently
+    // with no cross-talk between the workspace-scoped and module-scoped ids.
+    assert.equal(matchRoute("GET", "/modules/w1").rule.scope, "modules:read");
+    assert.equal(matchRoute("POST", "/modules/w1").rule.scope, "modules:write");
+    assert.equal(matchRoute("PUT", "/modules/m1").rule.scope, "modules:write");
+    assert.equal(matchRoute("DELETE", "/modules/m1").rule.scope, "modules:write");
+
     assert.equal(matchRoute("GET", "/auth/me"), null);
     assert.equal(matchRoute("POST", "/agent/chat"), null);
     assert.equal(matchRoute("GET", "/conversations"), null);
     assert.equal(matchRoute("GET", "/records/abc?x=1"), null);
     assert.equal(matchRoute("GET", "records/abc"), null);
+});
+
+test("boards are read with modules:read and refused for write without modules:write", async () => {
+    const { cx, calls } = await build({
+        grantedScopes: ["modules:read", "storage"],
+        requestScopes: "modules:read,modules:write,storage"
+    });
+
+    const boards = await cx.api.modules.list("w1");
+
+    assert.equal(calls.length, 1);
+    assert.deepEqual(calls[0], { method: "GET", path: "/modules/w1" });
+    assert.equal(boards[0]._id, "r1");
+
+    await assert.rejects(
+        () => cx.api.modules.create("w1", { name: "New board" }),
+        (error) => error.code === "scope_denied"
+    );
+    await assert.rejects(
+        () => cx.api.modules.update("m1", { name: "Renamed" }),
+        (error) => error.code === "scope_denied"
+    );
+    await assert.rejects(
+        () => cx.api.modules.remove("m1"),
+        (error) => error.code === "scope_denied"
+    );
+
+    // Still exactly the one call from the read above — every denied write
+    // must be refused before it ever reaches the transport.
+    assert.equal(calls.length, 1);
+});
+
+test("a workspace-level preview can see and manage boards with modules:write granted", async () => {
+    const { cx, calls } = await build({
+        grantedScopes: ["modules:read", "modules:write", "storage"],
+        requestScopes: "modules:read,modules:write,storage"
+    });
+
+    await cx.api.modules.create("w1", { name: "New board" });
+    await cx.api.modules.update("m1", { name: "Renamed" });
+    await cx.api.modules.remove("m1");
+
+    assert.deepEqual(calls.map((call) => `${call.method} ${call.path}`), [
+        "POST /modules/w1",
+        "PUT /modules/m1",
+        "DELETE /modules/m1"
+    ]);
 });
 
 test("the manifest validator collects every problem at once", () => {

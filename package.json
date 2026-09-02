@@ -1,6 +1,6 @@
 {
     "name": "@conexus-x/sdk",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "description": "Build custom views that run inside a Conexus X module.",
     "license": "UNLICENSED",
     "type": "module",
