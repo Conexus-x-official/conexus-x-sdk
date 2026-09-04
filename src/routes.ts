@@ -10,7 +10,7 @@
  *
  *   /api-key/*        Returns the user PERMANENT API key. A view that could read
  *                     it would walk away with credentials that outlive the
- *                     session, the board, and the app being uninstalled.
+ *                     session, the module, and the app being uninstalled.
  *   /auth/*           Sessions, OTPs, preferences, the Google handshake. None of
  *                     it is a view concern and /auth/me leaks the email of
  *                     someone who never installed the app.
@@ -19,7 +19,7 @@
  *   /uploads/*        Multipart, size limits, and a Cloudinary bill attached to
  *                     the workspace. Wanted later, gated on its own scope.
  *   /automations/*    Rules that fire on other people work. Reading them exposes
- *                     the internal shape of a board; writing them is remote code
+ *                     the internal shape of a module; writing them is remote code
  *                     execution with extra steps.
  *   /conversations/*  Private messages between colleagues. Never.
  *   /messages/*
@@ -50,34 +50,34 @@ export interface RouteRule {
  */
 export const ROUTES: readonly RouteRule[] = [
     /**
-     * Boards.
+     * Modules.
      *
-     * A view mounted at WORKSPACE level has no board behind it — the host hands
+     * A view mounted at WORKSPACE level has no module behind it — the host hands
      * it a workspaceId and nothing else — so `modules:read` is what makes a
      * workspace-level view useful at all: without it an app cannot show a
-     * person anything until they open a board themselves.
+     * person anything until they open a module themselves.
      *
      * `modules:write` covers create, rename/recolour and delete under one
-     * scope, the same convention as `collections:write` below — a board is a
+     * scope, the same convention as `collections:write` below — a module is a
      * structural object, not a value, and the three operations are reviewed
      * together or not at all. Held to a HIGHER bar than the resource scopes: a
-     * deleted board takes every collection, record and cell inside it with it,
+     * deleted module takes every collection, record and cell inside it with it,
      * so an admin approving this is approving the app to remove a whole area of
      * the workspace, not edit a value in one.
      */
-    { method: "GET", pattern: "/modules/:workspaceId", scope: "modules:read", summary: "List the boards in a workspace" },
-    { method: "POST", pattern: "/modules/:workspaceId", scope: "modules:write", summary: "Create a board" },
-    { method: "PUT", pattern: "/modules/:moduleId", scope: "modules:write", summary: "Rename, recolour or change the visibility of a board" },
-    { method: "DELETE", pattern: "/modules/:moduleId", scope: "modules:write", summary: "Delete a board and everything inside it" },
+    { method: "GET", pattern: "/modules/:workspaceId", scope: "modules:read", summary: "List the modules in a workspace" },
+    { method: "POST", pattern: "/modules/:workspaceId", scope: "modules:write", summary: "Create a module" },
+    { method: "PUT", pattern: "/modules/:moduleId", scope: "modules:write", summary: "Rename, recolour or change the visibility of a module" },
+    { method: "DELETE", pattern: "/modules/:moduleId", scope: "modules:write", summary: "Delete a module and everything inside it" },
 
-    // Collections — the groups a board is split into.
-    { method: "GET", pattern: "/collections/:moduleId", scope: "collections:read", summary: "List the collections on a board" },
+    // Collections — the groups a module is split into.
+    { method: "GET", pattern: "/collections/:moduleId", scope: "collections:read", summary: "List the collections on a module" },
     { method: "POST", pattern: "/collections/:moduleId", scope: "collections:write", summary: "Create a collection" },
     { method: "PUT", pattern: "/collections/:collectionId", scope: "collections:write", summary: "Rename or recolour a collection" },
     { method: "DELETE", pattern: "/collections/:collectionId", scope: "collections:write", summary: "Delete a collection and its records" },
 
     // Columns — the shape of the grid.
-    { method: "GET", pattern: "/columns/:moduleId", scope: "columns:read", summary: "List the columns on a board" },
+    { method: "GET", pattern: "/columns/:moduleId", scope: "columns:read", summary: "List the columns on a module" },
     { method: "POST", pattern: "/columns/:moduleId", scope: "columns:write", summary: "Add a column" },
     { method: "PUT", pattern: "/columns/:columnId", scope: "columns:write", summary: "Change a column" },
     { method: "DELETE", pattern: "/columns/:columnId", scope: "columns:write", summary: "Delete a column and every value in it" },
@@ -91,7 +91,7 @@ export const ROUTES: readonly RouteRule[] = [
     { method: "DELETE", pattern: "/records/:recordId", scope: "records:write", summary: "Delete a record" },
 
     // Cell values.
-    { method: "GET", pattern: "/record-values/references/:moduleId", scope: "values:read", summary: "Read mirrored values across linked boards" },
+    { method: "GET", pattern: "/record-values/references/:moduleId", scope: "values:read", summary: "Read mirrored values across linked modules" },
     { method: "GET", pattern: "/record-values/:recordId", scope: "values:read", summary: "Read every cell on a record" },
     { method: "POST", pattern: "/record-values", scope: "values:write", summary: "Write a cell" },
     { method: "PUT", pattern: "/record-values/:recordValueId", scope: "values:write", summary: "Change a cell" },

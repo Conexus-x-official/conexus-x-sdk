@@ -9,7 +9,7 @@
  * every app anyone writes.
  *
  * Only the fields a VIEW can legitimately use are mirrored. Anything internal
- * to the board (cache tags, optimistic-update bookkeeping) is deliberately
+ * to the module (cache tags, optimistic-update bookkeeping) is deliberately
  * absent: a field that appears here is a field we owe third parties stability
  * on, so the surface is kept to what is actually needed.
  */
@@ -28,7 +28,7 @@ export interface CxUser {
     avatar?: string;
 }
 
-/** A board. Called a module in the API and on the wire. */
+/** A module. Called a module in the API and on the wire. */
 export interface CxModule {
     _id: string;
     name: string;
@@ -67,7 +67,7 @@ export interface CxColumn {
     isHidden?: boolean;
     options?: string[];
     statusOptions?: CxStatusOption[];
-    /** Which grid the column belongs to — the board or the sub-record table. */
+    /** Which grid the column belongs to — the module or the sub-record table. */
     scope?: "record" | "subrecord";
 }
 
@@ -76,7 +76,7 @@ export interface CxRecord {
     name: string;
     position: number;
     collectionName: string;
-    /** Set on a sub-record, null on a board row — the only thing separating them. */
+    /** Set on a sub-record, null on a module row — the only thing separating them. */
     parentRecord?: string | null;
     subRecordCount?: number;
     amendmentCount?: number;
@@ -125,7 +125,7 @@ export interface CxMember {
  *
  * This is pushed again on every change rather than being read once at startup:
  * a person switching collection or selecting rows does not remount the iframe,
- * and a view that only reads context at boot silently shows the wrong board.
+ * and a view that only reads context at boot silently shows the wrong module.
  */
 export interface ViewContext {
     /** This mount of this view. Storage and logs are keyed by it. */
@@ -137,12 +137,12 @@ export interface ViewContext {
     workspaceId: string;
     /** Present for every surface except a workspace-level view. */
     moduleId?: string;
-    /** The collection currently in view on the board, when there is one. */
+    /** The collection currently in view on the module, when there is one. */
     collectionId?: string;
     /** Set when the view is mounted against a single record. */
     recordId?: string;
 
-    /** Rows the user has selected on the board. Empty, never undefined. */
+    /** Rows the user has selected on the module. Empty, never undefined. */
     selectedRecordIds: string[];
 
     user: CxUser;
@@ -155,7 +155,7 @@ export interface ViewContext {
     /**
      * Which side of the review pipeline this mount is on.
      *
-     * "test" is a sandbox board owned by the developer; "live" is a real
+     * "test" is a sandbox module owned by the developer; "live" is a real
      * customer workspace after admin approval. Exposed to the app deliberately:
      * an app that seeds demo data or points at a staging API of its own needs to
      * know which one it is in, and guessing from the hostname is exactly the
@@ -208,7 +208,7 @@ export interface CommandMap {
         type?: "success" | "error" | "info";
         timeoutMs?: number;
     };
-    /** Open the record panel the board already has, on the given row. */
+    /** Open the record panel the module already has, on the given row. */
     openRecord: { recordId: string };
     /** Native-feeling confirm dialog. Resolves to the answer. */
     confirm: { message: string; confirmLabel?: string; cancelLabel?: string };

@@ -54,7 +54,7 @@ const build = async (options = {}) => {
     const hostWindow = new WindowShim(HOST_ORIGIN);
     const guestWindow = new WindowShim(
         APP_ORIGIN,
-        `?cxOrigin=${encodeURIComponent(HOST_ORIGIN)}&cxApp=demo-app&cxView=board&cxScopes=${scopes}`
+        `?cxOrigin=${encodeURIComponent(HOST_ORIGIN)}&cxApp=demo-app&cxView=module&cxScopes=${scopes}`
     );
 
     guestWindow.parent = hostWindow;
@@ -67,7 +67,7 @@ const build = async (options = {}) => {
 
     const context = {
         instanceId: "inst_1",
-        viewId: "board",
+        viewId: "module",
         appId: "demo-app",
         workspaceId: "w1",
         moduleId: "m1",
@@ -82,9 +82,43 @@ const build = async (options = {}) => {
 
     const calls = [];
 
+    const ROW = { _id: "r1", name: "Row one", position: 0, collectionName: "c1" };
+
+    /**
+     * Wraps ROW the way the REAL backend wraps every response — under a named
+     * key, list or single, never bare. Mirrors the exact map in guest.ts's
+     * `field()` call sites.
+     *
+     * THIS is the piece that was missing before: the old mock returned ROW as
+     * a bare array directly, which no real endpoint on this API does, so every
+     * test here passed while `cx.api.records.list()` silently handed callers
+     * the whole `{records:[...]}` envelope instead of the array inside it —
+     * `(x.data ?? []).map is not a function` on the first real workspace with
+     * rows in it. Getting the mock shape right is what makes these tests catch
+     * that class of bug instead of agreeing with it.
+     */
+    const LIST_KEY = {
+        modules: "modules", collections: "collections", columns: "columns",
+        records: "records", "record-values": "values", amendments: "amendments",
+        "workspace-members": "members"
+    };
+    const SINGLE_KEY = {
+        modules: "module", collections: "collection", columns: "column",
+        records: "record", "record-values": "recordValue", amendments: "amendment"
+    };
+
     const transport = async (input) => {
         calls.push(input);
-        return { status: 200, data: [{ _id: "r1", name: "Row one", position: 0, collectionName: "c1" }] };
+
+        const resource = input.path.split("/")[1];
+        const key = (input.method === "GET" ? LIST_KEY : SINGLE_KEY)[resource];
+
+        return {
+            status: 200,
+            data: key
+                ? { [key]: input.method === "GET" ? [ROW] : ROW }
+                : ROW
+        };
     };
 
     const notices = [];
@@ -162,7 +196,7 @@ test("an endpoint off the allowlist is refused even with every scope granted", a
         requestScopes: "records:read,records:write,storage"
     });
 
-    // The user API key would outlive the session, the board and the install.
+    // The user API key would outlive the session, the module and the install.
     await assert.rejects(
         () => cx.request({ method: "GET", path: "/api-key" }),
         (error) => error.code === "route_denied"
@@ -209,7 +243,7 @@ test("storage is namespaced per instance and survives a round trip", async () =>
     assert.equal(await cx.storage.get("grouping"), null);
 });
 
-test("realtime changes are forwarded for this board and dropped for any other", async () => {
+test("realtime changes are forwarded for this module and dropped for any other", async () => {
     const { cx, host } = await build();
 
     const seen = [];
@@ -219,7 +253,7 @@ test("realtime changes are forwarded for this board and dropped for any other", 
     host.forwardChange({ entity: "record", action: "created", moduleId: "OTHER", workspaceId: "w1", at: "now" });
     host.forwardChange({ entity: "record", action: "created", workspaceId: "OTHER-WS", at: "now" });
 
-    assert.equal(seen.length, 1, "only the event for the mounted board may be delivered");
+    assert.equal(seen.length, 1, "only the event for the mounted module may be delivered");
     assert.equal(seen[0].moduleId, "m1");
 });
 
@@ -364,10 +398,10 @@ test("the route table matches what it should and nothing else", () => {
     // The literal route has to win over the parameter that would also swallow it.
     assert.equal(
         matchRoute("GET", "/record-values/references/m1").rule.summary,
-        "Read mirrored values across linked boards"
+        "Read mirrored values across linked modules"
     );
 
-    // Boards: GET/POST share a pattern shape with PUT/DELETE (one param
+    // Modules: GET/POST share a pattern shape with PUT/DELETE (one param
     // segment) but differ by method, so all four must resolve independently
     // with no cross-talk between the workspace-scoped and module-scoped ids.
     assert.equal(matchRoute("GET", "/modules/w1").rule.scope, "modules:read");
@@ -382,20 +416,20 @@ test("the route table matches what it should and nothing else", () => {
     assert.equal(matchRoute("GET", "records/abc"), null);
 });
 
-test("boards are read with modules:read and refused for write without modules:write", async () => {
+test("modules are read with modules:read and refused for write without modules:write", async () => {
     const { cx, calls } = await build({
         grantedScopes: ["modules:read", "storage"],
         requestScopes: "modules:read,modules:write,storage"
     });
 
-    const boards = await cx.api.modules.list("w1");
+    const modules = await cx.api.modules.list("w1");
 
     assert.equal(calls.length, 1);
     assert.deepEqual(calls[0], { method: "GET", path: "/modules/w1" });
-    assert.equal(boards[0]._id, "r1");
+    assert.equal(modules[0]._id, "r1");
 
     await assert.rejects(
-        () => cx.api.modules.create("w1", { name: "New board" }),
+        () => cx.api.modules.create("w1", { name: "New module" }),
         (error) => error.code === "scope_denied"
     );
     await assert.rejects(
@@ -412,13 +446,13 @@ test("boards are read with modules:read and refused for write without modules:wr
     assert.equal(calls.length, 1);
 });
 
-test("a workspace-level preview can see and manage boards with modules:write granted", async () => {
+test("a workspace-level preview can see and manage modules with modules:write granted", async () => {
     const { cx, calls } = await build({
         grantedScopes: ["modules:read", "modules:write", "storage"],
         requestScopes: "modules:read,modules:write,storage"
     });
 
-    await cx.api.modules.create("w1", { name: "New board" });
+    await cx.api.modules.create("w1", { name: "New module" });
     await cx.api.modules.update("m1", { name: "Renamed" });
     await cx.api.modules.remove("m1");
 

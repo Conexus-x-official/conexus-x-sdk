@@ -1,11 +1,11 @@
 # @conexus-x/sdk
 
-Build **custom views** that run inside a Conexus X module board — the way a monday.com board view works. An app is a web page you host; Conexus X frames it inside the board and talks to it over a single postMessage channel.
+Build **custom views** that run inside a Conexus X module module — the way a monday.com module view works. An app is a web page you host; Conexus X frames it inside the module and talks to it over a single postMessage channel.
 
 Zero runtime dependencies in the core, React bindings on the side. TypeScript-first. Ships both halves of the bridge so they cannot drift apart.
 
 ```
-guest  (the app, in an iframe)          host  (the Conexus X board)
+guest  (the app, in an iframe)          host  (the Conexus X module)
   @conexus-x/sdk                          @conexus-x/sdk/host
   @conexus-x/sdk/react     <------->      @conexus-x/sdk/react-host
                         one protocol
@@ -22,13 +22,13 @@ guest  (the app, in an iframe)          host  (the Conexus X board)
 
 **Why the core is not React.** An app author may write a view in React, Svelte, Vue or plain JS, and the host is itself a React app that must not ship a second copy of React inside an SDK. So the client stays framework-free and React is an *optional peer dependency of two entry points*. Nobody pays for it who is not using it; nobody is locked out who is.
 
-**Why React bindings exist anyway.** A view is a subscription problem — the board moves under it as the person switches collection, a colleague edits a cell, the theme flips — and hand-rolled `listen`/unsubscribe inside `useEffect` is where the leaks live.
+**Why React bindings exist anyway.** A view is a subscription problem — the module moves under it as the person switches collection, a colleague edits a cell, the theme flips — and hand-rolled `listen`/unsubscribe inside `useEffect` is where the leaks live.
 
 ---
 
 ## Why an iframe
 
-A custom view is code we did not write. Rendered into the board DOM it would share globals, styles, and the signed-in user JWT. On its own origin it can read none of that, and **every piece of data it gets, it gets because the host handed it over**.
+A custom view is code we did not write. Rendered into the module DOM it would share globals, styles, and the signed-in user JWT. On its own origin it can read none of that, and **every piece of data it gets, it gets because the host handed it over**.
 
 Two independent gates stand between an app and customer data:
 
@@ -57,7 +57,7 @@ export default function View() {
     const canWrite = useScope("records:write");
     const commands = useCommands();
 
-    // Refetches on its own when the board changes — no socket, no polling
+    // Refetches on its own when the module changes — no socket, no polling
     const { data: records, loading } = useRecords(context?.collectionId);
 
     useAutoResize();
@@ -87,7 +87,7 @@ const { context, settings, grantedScopes } = await cx.connect();
 // What the person is looking at
 console.log(context.workspaceId, context.moduleId, context.collectionId);
 
-// Read the board
+// Read the module
 const records = await cx.api.records.list(context.collectionId);
 
 // Write to it, if you were granted the scope
@@ -100,7 +100,7 @@ cx.listen("change", (event) => {
     if (event.entity === "record") refresh();
 });
 
-// Follow the person around the board
+// Follow the person around the module
 cx.listen("context", (next) => render(next));
 
 cx.autoResize();
@@ -137,7 +137,7 @@ Declared in the manifest, approved by an admin, enforced by the host.
 | Scope | Unlocks |
 | --- | --- |
 | `records:read` / `records:write` | Rows and sub-rows |
-| `collections:read` / `collections:write` | The groups a board is split into |
+| `collections:read` / `collections:write` | The groups a module is split into |
 | `columns:read` / `columns:write` | The shape of the grid |
 | `values:read` / `values:write` | Cell values, including mirrored ones |
 | `amendments:read` / `amendments:write` | Updates posted on a record |
@@ -180,7 +180,7 @@ const local  = parseManifest(json, { allowLocalhostEntry: true });  // test env 
 if (!result.ok) console.error(result.errors);    // every problem at once, not the first
 ```
 
-`surface` is `module` (a tab on the board — the monday-style custom view), `record` (a panel in the record view), or `workspace` (a full page).
+`surface` is `module` (a tab on the module — the monday-style custom view), `record` (a panel in the record view), or `workspace` (a full page).
 
 ---
 
@@ -200,7 +200,7 @@ export function CustomView({ install, context }: Props) {
         viewId: install.viewId,
         grantedScopes: install.grantedScopes,
 
-        // Pass a new object when the board moves; the hook diffs and pushes
+        // Pass a new object when the module moves; the hook diffs and pushes
         // only on a real change, so unrelated re-renders cost nothing.
         context,
         settings: install.settings,
@@ -221,11 +221,11 @@ export function CustomView({ install, context }: Props) {
 }
 ```
 
-`useViewHost` returns props to spread rather than a `<ConexusView />` component on purpose: the board owns how the frame is sized, bordered and laid out, and a component would grow a prop for each of those until it was a worse `<iframe>`.
+`useViewHost` returns props to spread rather than a `<ConexusView />` component on purpose: the module owns how the frame is sized, bordered and laid out, and a component would grow a prop for each of those until it was a worse `<iframe>`.
 
 The framework-free `createViewHost` is still there under `@conexus-x/sdk/host` if you need it — the hook is a wrapper, not a reimplementation.
 
-`forwardChange` drops anything that is not this board — a view must never learn that a record moved on a board its user cannot open, and only the host knows which board that is.
+`forwardChange` drops anything that is not this module — a view must never learn that a record moved on a module its user cannot open, and only the host knows which module that is.
 
 ---
 
@@ -259,7 +259,7 @@ Not built yet, and each is its own piece of work:
 - the sandbox workspace that serves the `test` environment
 - the automated test-case runner that gates submission
 - the admin dashboard approval queue
-- mounting a view inside `app/workspace/[id]/module/[moduleId]` — today that route is one board with no view switcher
+- mounting a view inside `app/workspace/[id]/module/[moduleId]` — today that route is one module with no view switcher
 - a marketplace, billing, and versioned rollout
 
 ---

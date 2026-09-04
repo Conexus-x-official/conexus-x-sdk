@@ -52,7 +52,7 @@ export const DEFAULT_HANDSHAKE_TIMEOUT_MS = 10_000;
  * NOTE the ceiling: a scope can never widen what the SIGNED-IN USER may do. The
  * host proxies every call with that person's own credentials and the API
  * re-checks workspace membership and module access on each one, so a view
- * granted `records:write` inside a board the user may only read still gets a
+ * granted `records:write` inside a module the user may only read still gets a
  * 403 from the server. Scopes narrow; they do not grant.
  */
 export const SCOPES = [
@@ -104,7 +104,7 @@ export interface WelcomeMessage extends BaseEnvelope {
     kind: "welcome";
     /**
      * Identifies THIS MOUNT of the view, not the app and not the view.
-     * Storage is namespaced by it, so the same app placed on two boards keeps
+     * Storage is namespaced by it, so the same app placed on two modules keeps
      * two separate sets of state rather than one that fights itself.
      */
     instanceId: string;
@@ -179,7 +179,7 @@ export const isRpcMethod = (value: unknown): value is RpcMethod =>
  *
  * `change` is the CRM realtime envelope forwarded down, already filtered to the
  * module this view is mounted in — a view must not learn that a record moved on
- * a board its user cannot open, and the host is the only place that rule can be
+ * a module its user cannot open, and the host is the only place that rule can be
  * enforced.
  */
 export const EVENT_TOPICS = [

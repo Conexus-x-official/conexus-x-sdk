@@ -5,7 +5,7 @@
  *     const { iframeProps, connected, forwardChange } = useViewHost({ ... });
  *     return <iframe {...iframeProps} className="h-full w-full border-0" />;
  *
- * A HOOK RATHER THAN A <ConexusView /> COMPONENT, deliberately: the board owns
+ * A HOOK RATHER THAN A <ConexusView /> COMPONENT, deliberately: the module owns
  * how the frame is sized, bordered, suspended and laid out, and a component
  * would have to grow a prop for each of those until it was a worse `<iframe>`.
  * The hook returns props to spread and gets out of the way.
@@ -39,7 +39,7 @@ export interface UseViewHostOptions {
     grantedScopes: Scope[];
 
     /**
-     * The live context. Pass a new object whenever the board moves — the hook
+     * The live context. Pass a new object whenever the module moves — the hook
      * diffs it and pushes only on a real change, so re-rendering the parent for
      * an unrelated reason costs nothing.
      */
@@ -67,7 +67,7 @@ export interface UseViewHostResult {
     connected: boolean;
     /** The bridge, for anything the hook does not wrap. Null before mount. */
     host: ViewHost | null;
-    /** Forward one crm:change envelope. Filtered to this board by the bridge. */
+    /** Forward one crm:change envelope. Filtered to this module by the bridge. */
     forwardChange: (event: ChangeEvent) => void;
 }
 
@@ -181,7 +181,7 @@ export const useViewHost = (options: UseViewHostOptions): UseViewHostResult => {
     /**
      * Push context on a REAL change.
      *
-     * Compared by value: the parent board re-renders constantly and almost none
+     * Compared by value: the parent module re-renders constantly and almost none
      * of those renders move anything this view can see. A push per render would
      * be a message per keystroke somewhere else on the page.
      */

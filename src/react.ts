@@ -11,7 +11,7 @@
  * using it, and nobody is locked out who is not using React.
  *
  * What React buys, and why it is worth a whole entry point: a view is a
- * subscription problem. The board moves under it — the person switches
+ * subscription problem. The module moves under it — the person switches
  * collection, a colleague edits a cell, the theme flips — and every one of
  * those is a re-render with a cleanup. Hooks are the right shape for that;
  * hand-rolled listen/unsubscribe in useEffect is where the leaks live.
@@ -173,7 +173,7 @@ export const useConexusEvent = <T extends EventTopic>(
     );
 };
 
-/** The live board context — re-renders when the person moves around it. */
+/** The live module context — re-renders when the person moves around it. */
 export const useViewContext = (client?: ConexusClient): ViewContext | null => {
     const cx = useClient(client);
     const { connection } = useConnection(cx);
@@ -205,7 +205,7 @@ export const useSettings = <T extends object = Record<string, unknown>>(
     return (pushed ?? connection?.settings ?? {}) as T;
 };
 
-/** Rows the person has selected on the board. */
+/** Rows the person has selected on the module. */
 export const useSelection = (client?: ConexusClient): string[] => {
     const context = useViewContext(client);
     const [selection, setSelection] = useState<string[]>([]);
@@ -235,10 +235,10 @@ export interface QueryState<T> {
 }
 
 /**
- * The general shape: fetch, then refetch when the board says something changed.
+ * The general shape: fetch, then refetch when the module says something changed.
  *
  * `shouldRefetch` is what keeps this cheap — a view listing records does not
- * want to re-query because somebody renamed a column, and the board is a busy
+ * want to re-query because somebody renamed a column, and the module is a busy
  * channel. Callers get the raw change envelope and decide.
  */
 export const useConexusQuery = <T>(
@@ -342,11 +342,11 @@ export const useRecords = (
     );
 
 /**
- * The boards in a workspace, kept live.
+ * The modules in a workspace, kept live.
  *
- * The hook a WORKSPACE-LEVEL view needs: mounted above a board, `context` has a
+ * The hook a WORKSPACE-LEVEL view needs: mounted above a module, `context` has a
  * workspaceId and no collection, so there are no records to list yet — the
- * boards are what there is to show.
+ * modules are what there is to show.
  */
 export const useModules = (
     workspaceId: string | undefined,
@@ -362,7 +362,7 @@ export const useModules = (
         }
     );
 
-/** The collections on the mounted board. */
+/** The collections on the mounted module. */
 export const useCollections = (
     moduleId: string | undefined,
     client?: ConexusClient
@@ -377,7 +377,7 @@ export const useCollections = (
         }
     );
 
-/** The columns on the mounted board. */
+/** The columns on the mounted module. */
 export const useColumns = (
     moduleId: string | undefined,
     client?: ConexusClient

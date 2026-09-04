@@ -1,5 +1,5 @@
 /**
- * @conexus-x/sdk — build a custom view that runs inside a Conexus X board.
+ * @conexus-x/sdk — build a custom view that runs inside a Conexus X module.
  *
  * The default export is the guest client, which is all an app author needs:
  *

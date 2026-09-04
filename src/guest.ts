@@ -343,76 +343,76 @@ export class ConexusClient {
      * shapes are described and no cache to go stale.
      */
     readonly api = {
-        /** Boards in a workspace. Read-only — see routes.ts for why. */
+        /** Modules in a workspace. Read-only — see routes.ts for why. */
         modules: {
             list: (workspaceId: string) =>
-                this.data<CxModule[]>({ method: "GET", path: `/modules/${workspaceId}` }),
+                this.field<CxModule[]>({ method: "GET", path: `/modules/${workspaceId}` }, "modules"),
             create: (workspaceId: string, body: { name: string; description?: string; icon?: string; color?: string; visibility?: CxModule["visibility"] }) =>
-                this.data<CxModule>({ method: "POST", path: `/modules/${workspaceId}`, body }),
+                this.field<CxModule>({ method: "POST", path: `/modules/${workspaceId}`, body }, "module"),
             update: (moduleId: string, body: Partial<CxModule>) =>
-                this.data<CxModule>({ method: "PUT", path: `/modules/${moduleId}`, body }),
+                this.field<CxModule>({ method: "PUT", path: `/modules/${moduleId}`, body }, "module"),
             remove: (moduleId: string) =>
                 this.data<unknown>({ method: "DELETE", path: `/modules/${moduleId}` })
         },
 
         collections: {
             list: (moduleId: string) =>
-                this.data<CxCollection[]>({ method: "GET", path: `/collections/${moduleId}` }),
+                this.field<CxCollection[]>({ method: "GET", path: `/collections/${moduleId}` }, "collections"),
             create: (moduleId: string, body: { name: string; color?: string }) =>
-                this.data<CxCollection>({ method: "POST", path: `/collections/${moduleId}`, body }),
+                this.field<CxCollection>({ method: "POST", path: `/collections/${moduleId}`, body }, "collection"),
             update: (collectionId: string, body: Partial<CxCollection>) =>
-                this.data<CxCollection>({ method: "PUT", path: `/collections/${collectionId}`, body }),
+                this.field<CxCollection>({ method: "PUT", path: `/collections/${collectionId}`, body }, "collection"),
             remove: (collectionId: string) =>
                 this.data<unknown>({ method: "DELETE", path: `/collections/${collectionId}` })
         },
 
         columns: {
             list: (moduleId: string) =>
-                this.data<CxColumn[]>({ method: "GET", path: `/columns/${moduleId}` }),
+                this.field<CxColumn[]>({ method: "GET", path: `/columns/${moduleId}` }, "columns"),
             create: (moduleId: string, body: Partial<CxColumn> & { name: string }) =>
-                this.data<CxColumn>({ method: "POST", path: `/columns/${moduleId}`, body }),
+                this.field<CxColumn>({ method: "POST", path: `/columns/${moduleId}`, body }, "column"),
             update: (columnId: string, body: Partial<CxColumn>) =>
-                this.data<CxColumn>({ method: "PUT", path: `/columns/${columnId}`, body }),
+                this.field<CxColumn>({ method: "PUT", path: `/columns/${columnId}`, body }, "column"),
             remove: (columnId: string) =>
                 this.data<unknown>({ method: "DELETE", path: `/columns/${columnId}` })
         },
 
         records: {
             list: (collectionId: string) =>
-                this.data<CxRecord[]>({ method: "GET", path: `/records/${collectionId}` }),
+                this.field<CxRecord[]>({ method: "GET", path: `/records/${collectionId}` }, "records"),
             create: (collectionId: string, body: { name: string; position?: number }) =>
-                this.data<CxRecord>({ method: "POST", path: `/records/${collectionId}`, body }),
+                this.field<CxRecord>({ method: "POST", path: `/records/${collectionId}`, body }, "record"),
             update: (recordId: string, body: Partial<CxRecord>) =>
-                this.data<CxRecord>({ method: "PUT", path: `/records/${recordId}`, body }),
+                this.field<CxRecord>({ method: "PUT", path: `/records/${recordId}`, body }, "record"),
             remove: (recordId: string) =>
                 this.data<unknown>({ method: "DELETE", path: `/records/${recordId}` }),
             subRecords: (recordId: string) =>
-                this.data<CxRecord[]>({ method: "GET", path: `/records/${recordId}/sub-records` }),
+                this.field<CxRecord[]>({ method: "GET", path: `/records/${recordId}/sub-records` }, "records"),
             createSubRecord: (recordId: string, body: { name: string }) =>
-                this.data<CxRecord>({ method: "POST", path: `/records/${recordId}/sub-records`, body })
+                this.field<CxRecord>({ method: "POST", path: `/records/${recordId}/sub-records`, body }, "record")
         },
 
         values: {
             forRecord: (recordId: string) =>
-                this.data<CxRecordValue[]>({ method: "GET", path: `/record-values/${recordId}` }),
+                this.field<CxRecordValue[]>({ method: "GET", path: `/record-values/${recordId}` }, "values"),
             set: (body: { record: string; column: string; value: unknown }) =>
-                this.data<CxRecordValue>({ method: "POST", path: "/record-values", body }),
+                this.field<CxRecordValue>({ method: "POST", path: "/record-values", body }, "recordValue"),
             update: (recordValueId: string, body: { value: unknown }) =>
-                this.data<CxRecordValue>({ method: "PUT", path: `/record-values/${recordValueId}`, body }),
+                this.field<CxRecordValue>({ method: "PUT", path: `/record-values/${recordValueId}`, body }, "recordValue"),
             clear: (recordValueId: string) =>
                 this.data<unknown>({ method: "DELETE", path: `/record-values/${recordValueId}` })
         },
 
         amendments: {
             list: (recordId: string) =>
-                this.data<CxAmendment[]>({ method: "GET", path: `/amendments/${recordId}` }),
+                this.field<CxAmendment[]>({ method: "GET", path: `/amendments/${recordId}` }, "amendments"),
             post: (recordId: string, body: { message: string; parentComment?: string }) =>
-                this.data<CxAmendment>({ method: "POST", path: `/amendments/${recordId}`, body })
+                this.field<CxAmendment>({ method: "POST", path: `/amendments/${recordId}`, body }, "amendment")
         },
 
         members: {
             list: (workspaceId: string) =>
-                this.data<CxMember[]>({ method: "GET", path: `/workspace-members/${workspaceId}` })
+                this.field<CxMember[]>({ method: "GET", path: `/workspace-members/${workspaceId}` }, "members")
         },
 
         activity: {
@@ -494,6 +494,26 @@ export class ConexusClient {
     private async data<T>(input: ApiRequest): Promise<T> {
         const response = await this.request<T>(input);
         return response.data;
+    }
+
+    /**
+     * Every list and single-object endpoint on this API wraps its payload
+     * under a named key — `{ modules: [...] }`, `{ record: {...} }` — never a
+     * bare array or object. `data()` above returns the response body AS IS,
+     * which is that wrapper; this unwraps the one field the caller actually
+     * wants.
+     *
+     * BUG THIS FIXES: every `api.*.list()` call used to hand back the whole
+     * `{ modules: [...] }` envelope typed AS an array. Nothing here ever threw
+     * — TypeScript trusted the generic, and the mismatch surfaced downstream
+     * as `(x.data ?? []).map is not a function` the first time a real project
+     * pointed at a real workspace with rows in it. The bridge tests never
+     * caught it because their mock transport returned a bare array directly,
+     * which no real endpoint on this API does.
+     */
+    private async field<T>(input: ApiRequest, key: string): Promise<T> {
+        const response = await this.request<Record<string, unknown>>(input);
+        return response.data[key] as T;
     }
 
     private async call<T>(method: RpcMethod, params: unknown): Promise<T> {

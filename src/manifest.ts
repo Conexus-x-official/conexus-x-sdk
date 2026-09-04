@@ -20,7 +20,7 @@ import { explainScope } from "./routes.js";
 
 /** Where in the app a view can be placed. */
 export const VIEW_SURFACES = [
-    /** A tab on a module board, beside the grid. This is the monday-style custom view. */
+    /** A tab on a module module, beside the grid. This is the monday-style custom view. */
     "module",
     /** A panel inside the record view. */
     "record",
@@ -36,7 +36,7 @@ export type SettingField =
     | { key: string; label: string; type: "number"; default?: number; min?: number; max?: number }
     | { key: string; label: string; type: "boolean"; default?: boolean }
     | { key: string; label: string; type: "select"; options: { label: string; value: string }[]; default?: string }
-    /** Lets the person pick a column from the board the view is mounted on. */
+    /** Lets the person pick a column from the module the view is mounted on. */
     | { key: string; label: string; type: "column"; columnTypes?: string[] };
 
 export interface ViewDefinition {

@@ -112,7 +112,7 @@ export const memoryStorage = (): HostStorage => {
  * The obvious transport: bearer token, JSON in and out.
  *
  * `token` is a FUNCTION so a refresh mid-session is picked up on the next call
- * rather than pinned at mount — a long-lived board is exactly where a captured
+ * rather than pinned at mount — a long-lived module is exactly where a captured
  * token goes stale.
  */
 export const fetchTransport = (options: {
@@ -182,7 +182,7 @@ export interface ViewHostOptions {
      * counts.
      */
     grantedScopes: Scope[];
-    /** Read fresh on every request, so a board change is never served stale. */
+    /** Read fresh on every request, so a module change is never served stale. */
     getContext: () => ViewContext;
     getSettings?: () => Record<string, unknown>;
     transport: HostTransport;
@@ -198,13 +198,13 @@ export interface ViewHost {
     readonly connected: boolean;
     /** Push an event down to the view. No-op until the guest has said hello. */
     push<T extends EventTopic>(topic: T, payload: EventMap[T]): void;
-    /** Re-send the current context — call it when the board, theme or selection moves. */
+    /** Re-send the current context — call it when the module, theme or selection moves. */
     pushContext(): void;
     /**
-     * Forward one CRM realtime envelope, dropped unless it belongs to the board
+     * Forward one CRM realtime envelope, dropped unless it belongs to the module
      * this view is mounted on. The filter is here rather than in the guest
-     * because a view must not be able to learn about a board its user cannot
-     * open, and only the host knows which board that is.
+     * because a view must not be able to learn about a module its user cannot
+     * open, and only the host knows which module that is.
      */
     forwardChange(event: ChangeEvent): void;
     destroy(): void;
@@ -497,7 +497,7 @@ export const createViewHost = (options: ViewHostOptions): ViewHost => {
 
             const context = options.getContext();
 
-            // Board-scoped rows only reach a view mounted on that board; a
+            // Module-scoped rows only reach a view mounted on that module; a
             // workspace-scoped row still has to match the workspace.
             if (event.moduleId && context.moduleId && event.moduleId !== context.moduleId) return;
             if (event.workspaceId && event.workspaceId !== context.workspaceId) return;
